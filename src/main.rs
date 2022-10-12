@@ -1,45 +1,51 @@
 use anyhow::{bail, Result};
 use chrono::Duration;
-use clap::Parser;
+use clap::{ArgAction, Parser};
 
 mod ntp;
 mod rfc868;
 
 /// A simple SNTP (RFC 5905) and RFC 868 client written in Rust.
 #[derive(Parser)]
-#[clap(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None)]
 struct Cli {
     /// Time server (e.g. time.nist.gov)
     host: String,
 
     /// Verbose output
-    #[clap(short, long, parse(from_occurrences))]
-    verbose: usize,
+    #[arg(short, long, action = ArgAction::Count)]
+    verbose: u8,
 
     /// Just print, don't set
-    #[clap(short, long, conflicts_with = "silent")]
+    #[arg(short, long, conflicts_with = "silent")]
     print: bool,
 
     /// Just set, don't print
-    #[clap(short, long, conflicts_with = "print")]
+    #[arg(short, long, conflicts_with = "print")]
     silent: bool,
 
     /// Use UDP instead of TCP as transport for RFC 868. SNTP will always use UDP protocol.
-    #[clap(short)]
+    #[arg(short)]
     udp: bool,
 
     /// Use port 'port' instead of port 37 (RFC 868) or 123 (SNTP, RFC 5905).
-    #[clap(short = 'o', long)]
+    #[arg(short = 'o', long)]
     port: Option<u16>,
 
     /// Use the adjtime(2) call to gradually skew the local time to the remote time rather than
     /// just hopping.
-    #[clap(short)]
+    #[arg(short)]
     adjtime: bool,
 
     /// Use RFC 868 time protocol instead of SNTP (RFC 5905).
-    #[clap(long)]
+    #[arg(long)]
     rfc868: bool,
+}
+
+#[test]
+fn verify_app() {
+    use clap::CommandFactory;
+    Cli::command().debug_assert();
 }
 
 trait TimeVal {
